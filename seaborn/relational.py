@@ -290,7 +290,12 @@ class _LinePlotter(_RelationalPlotter):
                 grouped = sub_data.groupby(orient, sort=self.sort)
                 # Could pass as_index=False instead of reset_index,
                 # but that fails on a corner case with older pandas.
-                sub_data = grouped.apply(agg, other).reset_index()
+                try:
+                    sub_data = grouped.apply(agg, other).reset_index()
+                except ZeroDivisionError:
+                    # If weights sum to zero, skip aggregation and treat as no estimator
+                    sub_data[f"{other}min"] = np.nan
+                    sub_data[f"{other}max"] = np.nan
             else:
                 sub_data[f"{other}min"] = np.nan
                 sub_data[f"{other}max"] = np.nan
