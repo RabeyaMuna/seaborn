@@ -31,6 +31,8 @@ class VarType(UserString):
         super().__init__(data)
 
     def __eq__(self, other):
+        if isinstance(other, str):
+            return self.data == other
         assert other in self.allowed, other
         return self.data == other
 
@@ -167,7 +169,7 @@ def categorical_order(vector: Series, order: list | None = None) -> list:
         order = list(vector.cat.categories)
     else:
         order = list(filter(pd.notnull, vector.unique()))
-        if variable_type(pd.Series(order)) == "numeric":
+        if variable_type(pd.Series(order)).data == "numeric":
             order.sort()
 
     return order
