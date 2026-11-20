@@ -5,6 +5,8 @@ import warnings
 import colorsys
 from contextlib import contextmanager
 from urllib.request import urlopen, urlretrieve
+import time
+from urllib.error import HTTPError
 from types import ModuleType
 
 import numpy as np
@@ -490,13 +492,39 @@ def ci(a, which=95, axis=None):
     return np.nanpercentile(a, p, axis)
 
 
+def _urlopen_with_retry(url, max_retries=3):
+    """Open a URL with retry logic for HTTP 429 (Too Many Requests) errors."""
+    for attempt in range(max_retries):
+        try:
+            return urlopen(url)
+        except HTTPError as e:
+            if e.code == 429 and attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+            else:
+                raise
+    return urlopen(url)
+
+
+def _urlretrieve_with_retry(url, filename, max_retries=3):
+    """Download a file with retry logic for HTTP 429 (Too Many Requests) errors."""
+    for attempt in range(max_retries):
+        try:
+            return urlretrieve(url, filename)
+        except HTTPError as e:
+            if e.code == 429 and attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+            else:
+                raise
+    return urlretrieve(url, filename)
+
+
 def get_dataset_names():
     """Report available example datasets, useful for reporting issues.
 
     Requires an internet connection.
 
     """
-    with urlopen(DATASET_NAMES_URL) as resp:
+    with _urlopen_with_retry(DATASET_NAMES_URL) as resp:
         txt = resp.read()
 
     dataset_names = [name.strip() for name in txt.decode().split("\n")]
@@ -571,7 +599,7 @@ def load_dataset(name, cache=True, data_home=None, **kws):
         if not os.path.exists(cache_path):
             if name not in get_dataset_names():
                 raise ValueError(f"'{name}' is not one of the example datasets.")
-            urlretrieve(url, cache_path)
+            _urlretrieve_with_retry(url, cache_path)
         full_path = cache_path
     else:
         full_path = url
