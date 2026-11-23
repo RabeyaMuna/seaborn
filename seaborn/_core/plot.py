@@ -19,7 +19,7 @@ from pandas import DataFrame, Series, Index
 import matplotlib as mpl
 from matplotlib.axes import Axes
 from matplotlib.artist import Artist
-from matplotlib.figure import Figure
+from matplotlib.figure import Figure, get_layout_engine
 import numpy as np
 from PIL import Image
 

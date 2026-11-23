@@ -1092,7 +1092,7 @@ class TestPlotting:
         assert tuple(p._figure.get_size_inches()) == size
 
     @pytest.mark.skipif(
-        _version_predates(mpl, "3.6"),
+        _version_predates(mpl, "3.6") or not hasattr(mpl.figure.Figure, "get_layout_engine"),
         reason="mpl<3.6 does not have get_layout_engine",
     )
     def test_layout_extent(self):
@@ -1101,7 +1101,7 @@ class TestPlotting:
         assert p._figure.get_layout_engine().get()["rect"] == [.1, .2, .5, .8]
 
     @pytest.mark.skipif(
-        _version_predates(mpl, "3.6"),
+        _version_predates(mpl, "3.6") or not hasattr(mpl.figure.Figure, "get_layout_engine"),
         reason="mpl<3.6 does not have get_layout_engine",
     )
     def test_constrained_layout_extent(self):
@@ -1169,7 +1169,7 @@ class TestPlotting:
             p2.plot()
 
     @pytest.mark.skipif(
-        _version_predates(mpl, "3.6"),
+        _version_predates(mpl, "3.6") or not hasattr(mpl.figure.Figure, "get_layout_engine"),
         reason="Requires newer matplotlib layout engine API"
     )
     def test_on_layout_algo_default(self):
@@ -1190,8 +1190,11 @@ class TestPlotting:
 
         f = mpl.figure.Figure(layout="constrained")
         p = Plot().on(f).layout(engine="tight").plot()
-        layout_engine = p._figure.get_layout_engine()
-        assert layout_engine.__class__.__name__ == "TightLayoutEngine"
+        if hasattr(p._figure, "get_layout_engine"):
+            layout_engine = p._figure.get_layout_engine()
+            assert layout_engine.__class__.__name__ == "TightLayoutEngine"
+        else:
+            pytest.skip("Matplotlib version doesn't support get_layout_engine")
 
     def test_axis_labels_from_constructor(self, long_df):
 
