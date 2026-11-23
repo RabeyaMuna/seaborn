@@ -468,7 +468,7 @@ def check_load_cached_dataset(name):
         assert_frame_equal(ds, ds2)
 
 
-@_network(url=DATASET_NAMES_URL)
+@_network(url=DATASET_NAMES_URL, max_retries=3, retry_delay=1)
 def test_get_dataset_names():
     names = get_dataset_names()
     assert names
@@ -503,7 +503,7 @@ def test_load_dataset_passed_data_error():
         load_dataset(df)
 
 
-@_network(url="https://github.com/mwaskom/seaborn-data")
+@_network(url="https://github.com/mwaskom/seaborn-data", max_retries=3, retry_delay=1)
 def test_load_cached_datasets():
 
     # Heavy test to verify that we can load all available datasets

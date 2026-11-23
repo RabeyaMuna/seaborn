@@ -496,11 +496,16 @@ def get_dataset_names():
     Requires an internet connection.
 
     """
-    with urlopen(DATASET_NAMES_URL) as resp:
-        txt = resp.read()
-
-    dataset_names = [name.strip() for name in txt.decode().split("\n")]
-    return list(filter(None, dataset_names))
+    try:
+        with urlopen(DATASET_NAMES_URL) as resp:
+            txt = resp.read()
+        dataset_names = [name.strip() for name in txt.decode().split("\n")]
+        return list(filter(None, dataset_names))
+    except HTTPError as e:
+        if e.code == 429:
+            time.sleep(1)  # Wait before retrying
+            return get_dataset_names()
+        raise
 
 
 def get_data_home(data_home=None):
@@ -569,9 +574,15 @@ def load_dataset(name, cache=True, data_home=None, **kws):
     if cache:
         cache_path = os.path.join(get_data_home(data_home), os.path.basename(url))
         if not os.path.exists(cache_path):
-            if name not in get_dataset_names():
-                raise ValueError(f"'{name}' is not one of the example datasets.")
-            urlretrieve(url, cache_path)
+            try:
+                if name not in get_dataset_names():
+                    raise ValueError(f"'{name}' is not one of the example datasets.")
+                urlretrieve(url, cache_path)
+            except HTTPError as e:
+                if e.code == 429:
+                    time.sleep(1)  # Wait before retrying
+                    return load_dataset(name, cache, data_home, **kws)
+                raise
         full_path = cache_path
     else:
         full_path = url

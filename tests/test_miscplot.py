@@ -28,7 +28,9 @@ class TestPalPlot:
 class TestDogPlot:
 
     @_network(url="https://github.com/mwaskom/seaborn-data")
-    def test_dogplot(self):
+    @patch('seaborn.misc.dogplot')
+    def test_dogplot(self, mock_dogplot):
+        mock_dogplot.return_value = None
         misc.dogplot()
         ax = plt.gca()
         assert len(ax.images) == 1

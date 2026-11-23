@@ -1352,8 +1352,13 @@ class VectorPlotter:
 
         # Use pd.to_datetime to convert strings or numbers to datetime objects
         # Note, use day-resolution for numeric->datetime to match matplotlib
-
-        raise NotImplementedError
+        import pandas as pd
+        try:
+            axis = pd.to_datetime(axis, errors='coerce')
+            axis = axis.dt.to_period('D')
+            return axis
+        except Exception as e:
+            raise ValueError(f"Invalid frequency: {e}")
 
     def scale_categorical(self, axis, order=None, formatter=None):
         """
